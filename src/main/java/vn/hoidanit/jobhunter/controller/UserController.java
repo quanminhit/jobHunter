@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
@@ -42,7 +43,8 @@ public class UserController {
 
     @PostMapping("/users")
     @ApiMessage("Create a user")
-    public ResponseEntity<ResUserDTO> createNewUser(@RequestBody User postManUser) throws IdInvalidException {
+    public ResponseEntity<ResUserDTO> createNewUser(@RequestBody User postManUser)
+            throws IdInvalidException {
         if (this.userService.handleExistUserByEmail(postManUser.getEmail())) {
             throw new IdInvalidException("Email" + postManUser.getEmail() + "da ton tai, vui long su dung email khac");
         }
