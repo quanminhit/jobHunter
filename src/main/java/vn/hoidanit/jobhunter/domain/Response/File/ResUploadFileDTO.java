@@ -1,4 +1,4 @@
-package vn.hoidanit.jobhunter.domain.Response.File;
+package vn.hoidanit.jobhunter.domain.response.file;
 
 import java.time.Instant;
 
@@ -7,11 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResUploadFileDTO {
-    private String name;
-    private Instant uploaded;
+    private String fileName;
+    private Instant uploadedAt;
 }

@@ -10,97 +10,43 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import vn.hoidanit.jobhunter.domain.Company;
+import vn.hoidanit.jobhunter.domain.Role;
 import vn.hoidanit.jobhunter.domain.User;
-import vn.hoidanit.jobhunter.domain.Response.ResCreateUserDTO;
-import vn.hoidanit.jobhunter.domain.Response.ResUpdateUserDTO;
-import vn.hoidanit.jobhunter.domain.Response.ResUserDTO;
-import vn.hoidanit.jobhunter.domain.Response.ResultPaginationDTO;
+import vn.hoidanit.jobhunter.domain.response.ResCreateUserDTO;
+import vn.hoidanit.jobhunter.domain.response.ResUpdateUserDTO;
+import vn.hoidanit.jobhunter.domain.response.ResUserDTO;
+import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.UserRepository;
-import vn.hoidanit.jobhunter.util.error.IdInvalidException;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final CompanyService companyService;
+    private final RoleService roleService;
 
-    public UserService(UserRepository userRepository, CompanyService companyService) {
+    public UserService(UserRepository userRepository,
+            CompanyService companyService,
+            RoleService roleService) {
         this.userRepository = userRepository;
         this.companyService = companyService;
+        this.roleService = roleService;
     }
 
-    public User handleCreateUser(User user) throws IdInvalidException {
+    public User handleCreateUser(User user) {
+        // check company
         if (user.getCompany() != null) {
-            Optional<Company> currentCompany = this.companyService.FetchCompanyById(user.getCompany().getId());
-            user.setCompany(currentCompany.isPresent() ? currentCompany.get() : null);
+            Optional<Company> companyOptional = this.companyService.findById(user.getCompany().getId());
+            user.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
         }
+
+        // check role
+        if (user.getRole() != null) {
+            Role r = this.roleService.fetchById(user.getRole().getId());
+            user.setRole(r != null ? r : null);
+        }
+
         return this.userRepository.save(user);
-    }
-
-    public ResUserDTO convertToResUserDTO(User user) {
-        ResUserDTO userDTO = new ResUserDTO();
-        ResUserDTO.CompanyUser com = new ResUserDTO.CompanyUser();
-        userDTO.setId(user.getId());
-        userDTO.setAddress(user.getAddress());
-        userDTO.setName(user.getName());
-        userDTO.setAge(user.getAge());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setGender(user.getGender());
-        userDTO.setCreateAt(user.getCreatedAt());
-        userDTO.setCreateBy(user.getCreatedBy());
-        userDTO.setUpdateAt(user.getUpdatedAt());
-        userDTO.setUpdateBy(user.getUpdatedBy());
-        if (user.getCompany() != null) {
-            com.setId(user.getCompany().getId());
-            com.setName(user.getCompany().getName());
-            userDTO.setCompany(com);
-        }
-        return userDTO;
-    }
-
-    public ResCreateUserDTO convertToResCreateUserDTO(User user) {
-        ResCreateUserDTO resUserDTO = new ResCreateUserDTO();
-        ResCreateUserDTO.CompanyUser com = new ResCreateUserDTO.CompanyUser();
-
-        resUserDTO.setId(user.getId());
-        resUserDTO.setAddress(user.getAddress());
-        resUserDTO.setName(user.getName());
-        resUserDTO.setAge(user.getAge());
-        resUserDTO.setEmail(user.getEmail());
-        resUserDTO.setGender(user.getGender());
-
-        if (user.getCompany() != null) {
-            com.setId(user.getCompany().getId());
-            com.setName(user.getCompany().getName());
-            resUserDTO.setCompany(com);
-        }
-        return resUserDTO;
-    }
-
-    public ResUpdateUserDTO convertToResUpdateUserDTO(User user) {
-        ResUpdateUserDTO userDTO = new ResUpdateUserDTO();
-        ResUpdateUserDTO.CompanyUser com = new ResUpdateUserDTO.CompanyUser();
-
-        userDTO.setId(user.getId());
-        userDTO.setAddress(user.getAddress());
-        userDTO.setName(user.getName());
-        userDTO.setAge(user.getAge());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setGender(user.getGender());
-        userDTO.setUpdatedAt(user.getUpdatedAt());
-        userDTO.setUpdatedBy(user.getUpdatedBy());
-
-        if (user.getCompany() != null) {
-            com.setId(user.getCompany().getId());
-            com.setName(user.getCompany().getName());
-            userDTO.setCompany(com);
-        }
-
-        return userDTO;
-    }
-
-    public boolean handleExistUserByEmail(String email) {
-        return this.userRepository.existsByEmail(email);
     }
 
     public void handleDeleteUser(long id) {
@@ -127,37 +73,37 @@ public class UserService {
         mt.setTotal(pageUser.getTotalElements());
 
         rs.setMeta(mt);
-        List<ResUserDTO> list = pageUser.getContent().stream().map(item -> new ResUserDTO(
-                item.getId(),
-                item.getName(),
-                item.getEmail(),
-                item.getAge(),
-                item.getGender(),
-                item.getAddress(),
-                item.getCreatedBy(),
-                item.getCreatedAt(),
-                item.getUpdatedBy(),
-                item.getUpdatedAt(),
-                new ResUserDTO.CompanyUser(
-                        item.getCompany() != null ? item.getCompany().getId() : 0,
-                        item.getCompany() != null ? item.getCompany().getName() : null)))
+
+        // remove sensitive data
+        List<ResUserDTO> listUser = pageUser.getContent()
+                .stream().map(item -> this.convertToResUserDTO(item))
                 .collect(Collectors.toList());
-        rs.setResult(list);
+
+        rs.setResult(listUser);
+
         return rs;
     }
 
     public User handleUpdateUser(User reqUser) {
         User currentUser = this.fetchUserById(reqUser.getId());
         if (currentUser != null) {
-            currentUser.setName(reqUser.getName());
             currentUser.setAddress(reqUser.getAddress());
-            currentUser.setAge(reqUser.getAge());
             currentUser.setGender(reqUser.getGender());
-            // check Company
+            currentUser.setAge(reqUser.getAge());
+            currentUser.setName(reqUser.getName());
+
+            // check company
             if (reqUser.getCompany() != null) {
-                Optional<Company> currentCompany = this.companyService.FetchCompanyById(reqUser.getCompany().getId());
-                reqUser.setCompany(currentCompany.isPresent() ? currentCompany.get() : null);
+                Optional<Company> companyOptional = this.companyService.findById(reqUser.getCompany().getId());
+                currentUser.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
             }
+
+            // check role
+            if (reqUser.getRole() != null) {
+                Role r = this.roleService.fetchById(reqUser.getRole().getId());
+                currentUser.setRole(r != null ? r : null);
+            }
+
             // update
             currentUser = this.userRepository.save(currentUser);
         }
@@ -168,11 +114,80 @@ public class UserService {
         return this.userRepository.findByEmail(username);
     }
 
-    public void updateRefreshToken(String refresh_token, String email) {
-        User user = this.userRepository.findByEmail(email);
-        if (user != null) {
-            user.setRefreshToken(refresh_token);
-            this.userRepository.save(user);
+    public boolean isEmailExist(String email) {
+        return this.userRepository.existsByEmail(email);
+    }
+
+    public ResCreateUserDTO convertToResCreateUserDTO(User user) {
+        ResCreateUserDTO res = new ResCreateUserDTO();
+        ResCreateUserDTO.CompanyUser com = new ResCreateUserDTO.CompanyUser();
+
+        res.setId(user.getId());
+        res.setEmail(user.getEmail());
+        res.setName(user.getName());
+        res.setAge(user.getAge());
+        res.setCreatedAt(user.getCreatedAt());
+        res.setGender(user.getGender());
+        res.setAddress(user.getAddress());
+
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            res.setCompany(com);
+        }
+        return res;
+    }
+
+    public ResUpdateUserDTO convertToResUpdateUserDTO(User user) {
+        ResUpdateUserDTO res = new ResUpdateUserDTO();
+        ResUpdateUserDTO.CompanyUser com = new ResUpdateUserDTO.CompanyUser();
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            res.setCompany(com);
+        }
+
+        res.setId(user.getId());
+        res.setName(user.getName());
+        res.setAge(user.getAge());
+        res.setUpdatedAt(user.getUpdatedAt());
+        res.setGender(user.getGender());
+        res.setAddress(user.getAddress());
+        return res;
+    }
+
+    public ResUserDTO convertToResUserDTO(User user) {
+        ResUserDTO res = new ResUserDTO();
+        ResUserDTO.CompanyUser com = new ResUserDTO.CompanyUser();
+        ResUserDTO.RoleUser roleUser = new ResUserDTO.RoleUser();
+        if (user.getCompany() != null) {
+            com.setId(user.getCompany().getId());
+            com.setName(user.getCompany().getName());
+            res.setCompany(com);
+        }
+
+        if (user.getRole() != null) {
+            roleUser.setId(user.getRole().getId());
+            roleUser.setName(user.getRole().getName());
+            res.setRole(roleUser);
+        }
+
+        res.setId(user.getId());
+        res.setEmail(user.getEmail());
+        res.setName(user.getName());
+        res.setAge(user.getAge());
+        res.setUpdatedAt(user.getUpdatedAt());
+        res.setCreatedAt(user.getCreatedAt());
+        res.setGender(user.getGender());
+        res.setAddress(user.getAddress());
+        return res;
+    }
+
+    public void updateUserToken(String token, String email) {
+        User currentUser = this.handleGetUserByUsername(email);
+        if (currentUser != null) {
+            currentUser.setRefreshToken(token);
+            this.userRepository.save(currentUser);
         }
     }
 

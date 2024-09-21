@@ -1,6 +1,10 @@
 package vn.hoidanit.jobhunter.domain;
 
 import java.time.Instant;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,14 +22,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hoidanit.jobhunter.util.SecurityUtil;
 import vn.hoidanit.jobhunter.util.constant.LevelEnum;
-import java.util.*;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "jobs")
@@ -35,9 +36,15 @@ public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
+    @NotBlank(message = "name không được để trống")
     private String name;
+
+    @NotBlank(message = "location không được để trống")
     private String location;
+
     private double salary;
+
     private int quantity;
 
     @Enumerated(EnumType.STRING)
@@ -48,7 +55,6 @@ public class Job {
 
     private Instant startDate;
     private Instant endDate;
-
     private boolean active;
     private Instant createdAt;
     private Instant updatedAt;
@@ -62,11 +68,11 @@ public class Job {
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = { "jobs" })
     @JoinTable(name = "job_skill", joinColumns = @JoinColumn(name = "job_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
-    private List<Skills> skills;
+    private List<Skill> skills;
 
     @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Resume> resumes;
+    List<Resume> resumes;
 
     @PrePersist
     public void handleBeforeCreate() {

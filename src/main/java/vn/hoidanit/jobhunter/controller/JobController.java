@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import vn.hoidanit.jobhunter.domain.Job;
-import vn.hoidanit.jobhunter.domain.Response.ResultPaginationDTO;
-import vn.hoidanit.jobhunter.domain.Response.JobDTO.ResCreateJobDTO;
-import vn.hoidanit.jobhunter.domain.Response.JobDTO.ResUpdateJobDTO;
+import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
+import vn.hoidanit.jobhunter.domain.response.job.ResCreateJobDTO;
+import vn.hoidanit.jobhunter.domain.response.job.ResUpdateJobDTO;
 import vn.hoidanit.jobhunter.service.JobService;
 import vn.hoidanit.jobhunter.util.annotation.ApiMessage;
 import vn.hoidanit.jobhunter.util.error.IdInvalidException;
@@ -49,7 +49,7 @@ public class JobController {
         }
 
         return ResponseEntity.ok()
-                .body(this.jobService.update(job));
+                .body(this.jobService.update(job, currentJob.get()));
     }
 
     @DeleteMapping("/jobs/{id}")

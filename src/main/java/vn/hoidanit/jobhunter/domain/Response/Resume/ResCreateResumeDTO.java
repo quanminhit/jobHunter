@@ -1,4 +1,4 @@
-package vn.hoidanit.jobhunter.domain.Response.Resume;
+package vn.hoidanit.jobhunter.domain.response.resume;
 
 import java.time.Instant;
 

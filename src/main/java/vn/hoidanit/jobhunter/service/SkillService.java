@@ -1,54 +1,58 @@
 package vn.hoidanit.jobhunter.service;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import vn.hoidanit.jobhunter.domain.Skills;
-import vn.hoidanit.jobhunter.domain.Response.ResultPaginationDTO;
+import vn.hoidanit.jobhunter.domain.Skill;
+import vn.hoidanit.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hoidanit.jobhunter.repository.SkillsRepository;
-import java.util.*;
 
 @Service
 public class SkillService {
-    private final SkillsRepository skillRepository;
+    private final SkillsRepository SkillsRepository;
 
-    public SkillService(SkillsRepository skillRepository) {
-        this.skillRepository = skillRepository;
+    public SkillService(SkillsRepository SkillsRepository) {
+        this.SkillsRepository = SkillsRepository;
     }
 
     public boolean isNameExist(String name) {
-        return this.skillRepository.existsByName(name);
+        return this.SkillsRepository.existsByName(name);
     }
 
-    public Skills fetchSkillById(long id) {
-        Optional<Skills> skillOptional = this.skillRepository.findById(id);
+    public Skill fetchSkillById(long id) {
+        Optional<Skill> skillOptional = this.SkillsRepository.findById(id);
         if (skillOptional.isPresent())
             return skillOptional.get();
         return null;
     }
 
-    public Skills createSkill(Skills s) {
-        return this.skillRepository.save(s);
+    public Skill createSkill(Skill s) {
+        return this.SkillsRepository.save(s);
     }
 
-    public Skills updateSkills(Skills s) {
-        return this.skillRepository.save(s);
+    public Skill updateSkill(Skill s) {
+        return this.SkillsRepository.save(s);
     }
 
-    public void deleteSkills(long id) {
-        // delete job (inside job_Skills table)
-        Optional<Skills> skillOptional = this.skillRepository.findById(id);
-        Skills currentSkill = skillOptional.get();
+    public void deleteSkill(long id) {
+        // delete job (inside job_skill table)
+        Optional<Skill> skillOptional = this.SkillsRepository.findById(id);
+        Skill currentSkill = skillOptional.get();
         currentSkill.getJobs().forEach(job -> job.getSkills().remove(currentSkill));
 
+        // delete subscriber (inside subscriber_skill table)
+        currentSkill.getSubscribers().forEach(subs -> subs.getSkills().remove(currentSkill));
+
         // delete skill
-        this.skillRepository.delete(currentSkill);
+        this.SkillsRepository.delete(currentSkill);
     }
 
-    public ResultPaginationDTO fetchAllSkills(Specification<Skills> spec, Pageable pageable) {
-        Page<Skills> pageUser = this.skillRepository.findAll(spec, pageable);
+    public ResultPaginationDTO fetchAllSkills(Specification<Skill> spec, Pageable pageable) {
+        Page<Skill> pageUser = this.SkillsRepository.findAll(spec, pageable);
 
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
