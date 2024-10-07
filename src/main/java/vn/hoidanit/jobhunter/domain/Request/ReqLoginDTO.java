@@ -1,6 +1,6 @@
 package vn.hoidanit.jobhunter.domain.request;
 
-import jakarta.validation.constraints.NotBlank;
+    import jakarta.validation.constraints.NotBlank;
 
 public class ReqLoginDTO {
     @NotBlank(message = "username không được để trống")

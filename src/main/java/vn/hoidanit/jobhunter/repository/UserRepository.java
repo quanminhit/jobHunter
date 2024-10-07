@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import vn.hoidanit.jobhunter.domain.Company;
 import vn.hoidanit.jobhunter.domain.User;
-import java.util.*;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
